@@ -2,14 +2,15 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Reportar incidencia</title>
 </head>
 <body style="font-family:Arial;padding:30px;max-width:700px;">
   <h1>Reportar incidencia</h1>
   <p>Introduce el equipo (ej: EQ-001) y describe el problema.</p>
 
-  <form>
+  <!-- IMPORTANTE: el formulario NO se envía solo -->
+  <form id="formIncidencia">
     <label><b>Equipo</b></label><br>
     <input id="equipo" type="text" placeholder="EQ-001" style="width:100%;padding:10px;"><br><br>
 
@@ -19,59 +20,73 @@
     <label><b>Contacto (opcional)</b></label><br>
     <input id="contacto" type="text" style="width:100%;padding:10px;" placeholder="Teléfono o email"><br><br>
 
-    <button type="button" onclick="enviar()" style="padding:12px 16px;">Enviar</button>
+    <!-- Botón con type=button para evitar comportamiento raro del form -->
+    <button id="btnEnviar" type="button" style="padding:12px 16px;">Enviar</button>
   </form>
 
-  <p id="msg" style="margin-top:20px;"></p>
+  <p id="msg" style="margin-top:20px;font-weight:bold;"></p>
 
   <script>
-  const SUPABASE_URL = "https://asklcawpklnbujgqdcan.supabase.co
+    // Pega aquí tus datos de Supabase:
+    const SUPABASE_URL = "https://asklcawpklnbujgqdcan.supabase.co
 ";
-  const SUPABASE_ANON_KEY = "sb_publishable_Upul_io7YkVE8LGCEdKexQ_eXMf7z1V";
+    const SUPABASE_ANON_KEY = "sb_publishable_Upul_io7YkVE8LGCEdKexQ_eXMf7z1V";
 
-  async function enviar() {
-    const equipo = document.getElementById("equipo").value.trim();
-    const descripcion = document.getElementById("desc").value.trim();
-    const contacto = document.getElementById("contacto").value.trim();
-    const msg = document.getElementById("msg");
+    // Esto evita que el form recargue la página
+    document.getElementById("formIncidencia").addEventListener("submit", (e) => e.preventDefault());
 
-    if (!equipo || !descripcion) {
-      msg.innerText = "❌ Equipo y descripción son obligatorios.";
-      return;
-    }
+    // Conectar el botón al envío
+    document.getElementById("btnEnviar").addEventListener("click", enviar);
 
-    msg.innerText = "Enviando...";
+    async function enviar() {
+      const equipo = document.getElementById("equipo").value.trim();
+      const descripcion = document.getElementById("desc").value.trim();
+      const contacto = document.getElementById("contacto").value.trim();
+      const msg = document.getElementById("msg");
+      const btn = document.getElementById("btnEnviar");
 
-    try {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/incidencias`, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-          "apikey": SUPABASE_ANON_KEY,
-          "Content-Type": "application/json",
-          "Prefer": "return=minimal"
-        },
-        body: JSON.stringify({
-          equipo_id: equipo,
-          descripcion: descripcion,
-          contacto: contacto || null
-        })
-      });
-
-      if (!res.ok) {
-        const errTxt = await res.text();
-        throw new Error(errTxt);
+      if (!equipo || !descripcion) {
+        msg.innerText = "❌ Equipo y descripción son obligatorios.";
+        return;
       }
 
-      msg.innerText = "✅ Incidencia enviada correctamente. ¡Gracias!";
+      btn.disabled = true;
+      msg.innerText = "Enviando...";
 
-      // limpiar
-      document.getElementById("equipo").value = "";
-      document.getElementById("desc").value = "";
-      document.getElementById("contacto").value = "";
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/incidencias`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+            "apikey": SUPABASE_ANON_KEY,
+            "Content-Type": "application/json",
+            "Prefer": "return=minimal"
+          },
+          body: JSON.stringify({
+            equipo_id: equipo,
+            descripcion: descripcion,
+            contacto: contacto || null
+          })
+        });
 
-    } catch (err) {
-      msg.innerText = "❌ Error enviando incidencia: " + err.message;
+        if (!res.ok) {
+          const errTxt = await res.text();
+          throw new Error(errTxt);
+        }
+
+        msg.innerText = "✅ Incidencia enviada correctamente. ¡Gracias!";
+        btn.disabled = false;
+
+        // limpiar campos
+        document.getElementById("equipo").value = "";
+        document.getElementById("desc").value = "";
+        document.getElementById("contacto").value = "";
+
+      } catch (err) {
+        msg.innerText = "❌ Error enviando incidencia: " + err.message;
+        btn.disabled = false;
+      }
     }
-  }
-</script>
+  </script>
+</body>
+</html>
