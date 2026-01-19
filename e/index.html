@@ -25,10 +25,53 @@
   <p id="msg" style="margin-top:20px;"></p>
 
   <script>
-    function enviar(){
-      document.getElementById('msg').innerText =
-        "✅ Incidencia enviada (demo). Luego lo conectamos a Supabase.";
+  const SUPABASE_URL = "https://asklcawpklnbujgqdcan.supabase.co
+";
+  const SUPABASE_ANON_KEY = "sb_publishable_Upul_io7YkVE8LGCEdKexQ_eXMf7z1V";
+
+  async function enviar() {
+    const equipo = document.getElementById("equipo").value.trim();
+    const descripcion = document.getElementById("desc").value.trim();
+    const contacto = document.getElementById("contacto").value.trim();
+    const msg = document.getElementById("msg");
+
+    if (!equipo || !descripcion) {
+      msg.innerText = "❌ Equipo y descripción son obligatorios.";
+      return;
     }
-  </script>
-</body>
-</html>
+
+    msg.innerText = "Enviando...";
+
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/incidencias`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+          "apikey": SUPABASE_ANON_KEY,
+          "Content-Type": "application/json",
+          "Prefer": "return=minimal"
+        },
+        body: JSON.stringify({
+          equipo_id: equipo,
+          descripcion: descripcion,
+          contacto: contacto || null
+        })
+      });
+
+      if (!res.ok) {
+        const errTxt = await res.text();
+        throw new Error(errTxt);
+      }
+
+      msg.innerText = "✅ Incidencia enviada correctamente. ¡Gracias!";
+
+      // limpiar
+      document.getElementById("equipo").value = "";
+      document.getElementById("desc").value = "";
+      document.getElementById("contacto").value = "";
+
+    } catch (err) {
+      msg.innerText = "❌ Error enviando incidencia: " + err.message;
+    }
+  }
+</script>
